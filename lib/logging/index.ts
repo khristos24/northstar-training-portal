@@ -10,14 +10,27 @@ export type AuditEvent = RequestContext & {
   result: 'success' | 'failure'; reason: string;
   metadata?: { upload_id?: string; original_name?: string; stored_name?: string; size_bytes?: number; sha256?: string; revoked_count?: number; uploaded_at?: string };
 };
+function redactValue(value: string) {
+  for (const secret of [process.env.FINANCE_SEED_PASSWORD, process.env.EMPLOYEE_SEED_PASSWORD,
+    process.env.ADMIN_SEED_PASSWORD, process.env.SESSION_SECRET, process.env.POSTGRES_PASSWORD]) {
+    if (secret) value = value.replaceAll(secret, '[REDACTED]');
+  }
+  return value;
+}
 export function serializeEvent(event: AuditEvent) {
-  return JSON.stringify({
+  let line = JSON.stringify({
     timestamp: new Date().toISOString(), event_type: event.eventType,
     request_id: event.requestId, source_ip: event.sourceIp,
     user_agent: event.userAgent.slice(0, 256), submitted_email: event.submittedEmail ?? null,
     user_id: event.userId ?? null, result: event.result, reason: event.reason,
     ...(event.metadata ? { metadata: event.metadata } : {})
-  }) + '\n';
+  });
+  // Client-supplied fields must not expose configured instructor secrets.
+  for (const value of [process.env.FINANCE_SEED_PASSWORD, process.env.EMPLOYEE_SEED_PASSWORD,
+    process.env.ADMIN_SEED_PASSWORD, process.env.SESSION_SECRET, process.env.POSTGRES_PASSWORD]) {
+    if (value) line = line.replaceAll(JSON.stringify(value).slice(1, -1), '[REDACTED]');
+  }
+  return line + '\n';
 }
 export function appendSecurityLog(event: AuditEvent, directory = getEnv().LOG_DIR) {
   mkdirSync(directory, { recursive: true, mode: 0o750 });
@@ -34,10 +47,17 @@ export function appendSecurityLog(event: AuditEvent, directory = getEnv().LOG_DI
   } finally { if (fd !== undefined) closeSync(fd); }
 }
 export async function recordEvent(event: AuditEvent, client: Prisma.TransactionClient | PrismaClient = db()) {
+  const safe: AuditEvent = {
+    ...event,
+    userAgent: redactValue(event.userAgent),
+    submittedEmail: event.submittedEmail ? redactValue(event.submittedEmail) : event.submittedEmail,
+    metadata: event.metadata ? Object.fromEntries(Object.entries(event.metadata).map(([key, value]) =>
+      [key, typeof value === 'string' ? redactValue(value) : value])) : undefined
+  };
   await client.securityEvent.create({ data: {
-    eventType: event.eventType, requestId: event.requestId, sourceIp: event.sourceIp,
-    userAgent: event.userAgent, submittedEmail: event.submittedEmail,
-    userId: event.userId, result: event.result, reason: event.reason, metadata: event.metadata
+    eventType: safe.eventType, requestId: safe.requestId, sourceIp: safe.sourceIp,
+    userAgent: safe.userAgent, submittedEmail: safe.submittedEmail,
+    userId: safe.userId, result: safe.result, reason: safe.reason, metadata: safe.metadata
   } });
-  appendSecurityLog(event);
+  appendSecurityLog(safe);
 }

@@ -40,8 +40,7 @@ chmod 600 .env
 # Edit .env locally. Supply all five secrets before continuing.
 sudo bash scripts/prepare-host.sh
 sudo bash scripts/verify-host-paths.sh
-docker compose up -d --build --wait --wait-timeout 180
-bash scripts/health-check.sh
+sudo bash scripts/deploy.sh
 ```
 
 Alternatively, `npm run lab:init` creates .env with unique random lab-only values and refuses to overwrite an existing file. Credentials are never printed. Review and configure the finance password locally before class.

@@ -32,6 +32,19 @@ describe('upload boundary', () => {
 describe('audit and form compatibility', () => {
   const event: AuditEvent = { eventType: 'authentication_failure', requestId: randomUUID(), sourceIp: '127.0.0.1', userAgent: 'unit-test', submittedEmail: 'finance@northstar.test', userId: null, result: 'failure', reason: 'invalid_credentials' };
   it('whitelists structured JSON fields and excludes extra secret properties', () => { const line = serializeEvent({ ...event, password: secrets.FINANCE_SEED_PASSWORD, sessionToken: 'not-a-real-token' } as AuditEvent); expect(JSON.parse(line).event_type).toBe('authentication_failure'); for (const value of Object.values(secrets)) expect(line).not.toContain(value); expect(line).not.toContain('sessionToken'); expect(line.endsWith('\n')).toBe(true); });
+  it('redacts a configured password from client-controlled log fields', () => {
+    const previous = process.env.FINANCE_SEED_PASSWORD;
+    process.env.FINANCE_SEED_PASSWORD = secrets.FINANCE_SEED_PASSWORD;
+    try {
+      const line = serializeEvent({ ...event, userAgent: secrets.FINANCE_SEED_PASSWORD, metadata: { original_name: secrets.FINANCE_SEED_PASSWORD } });
+      expect(line).not.toContain(secrets.FINANCE_SEED_PASSWORD);
+      expect(line).toContain('[REDACTED]');
+      expect(JSON.parse(line).user_agent).toBe('[REDACTED]');
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_SEED_PASSWORD;
+      else process.env.FINANCE_SEED_PASSWORD = previous;
+    }
+  });
   it('appends independent JSON records', async () => { const dir = await mkdtemp(path.join(os.tmpdir(), 'northstar-audit-')); try { appendSecurityLog(event, dir); appendSecurityLog(event, dir); const records = (await readFile(path.join(dir, 'security.json'), 'utf8')).trim().split('\n').map(s => JSON.parse(s)); expect(records).toHaveLength(2); expect(records.every(e => e.request_id === event.requestId)).toBe(true); } finally { await rm(dir, { recursive: true, force: true }); } });
   it('returns the exact failure marker with a native POST form', () => { const html = loginDocument(true); expect(html).toContain('Invalid email or password'); expect(html).toContain('name="email"'); expect(html).toContain('name="password"'); expect(html).toContain('enctype="application/x-www-form-urlencoded"'); expect(loginDocument()).not.toContain('Invalid email or password'); });
   it('guards reset paths and preserves security logs', async () => { const script = await readFile('scripts/reset-lab.sh', 'utf8'); const guard = await readFile('scripts/host-paths.sh', 'utf8'); expect(script).not.toContain('rm -rf'); expect(script).toContain('verify_emptyable_path /opt/northstar/uploads'); expect(guard).toContain('realpath -e'); expect(guard).toContain('! -L'); expect(script).not.toMatch(/find.*\/var\/log.*-delete/); });
