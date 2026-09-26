@@ -1,0 +1,2 @@
+'use client';
+export default function ErrorPage({ reset }: { reset: () => void }) { return <main className="error-page"><span className="eyebrow dark">NORTHSTAR / TEMPORARILY UNAVAILABLE</span><h1>Let’s try that again.</h1><p>The portal could not complete your request. Your instructor can check the environment.</p><button className="button button-primary" onClick={reset}>Try again ↗</button><a href="/login">Return to sign in</a></main>; }

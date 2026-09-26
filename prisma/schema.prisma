@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum Role {
+  FINANCE
+  EMPLOYEE
+  ADMIN
+}
+enum AttemptResult {
+  SUCCESS
+  FAILURE
+}
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique
+  displayName String
+  passwordHash String
+  role Role
+  active Boolean @default(true)
+  failedLoginCount Int @default(0)
+  lockedUntil DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sessions Session[]
+  loginAttempts LoginAttempt[]
+  uploads Upload[]
+  events SecurityEvent[]
+}
+model Session {
+  id String @id @default(uuid()) @db.Uuid
+  tokenHash String @unique
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([expiresAt])
+}
+model LoginAttempt {
+  id String @id @default(uuid()) @db.Uuid
+  userId String? @db.Uuid
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  submittedEmail String
+  sourceIp String
+  userAgent String
+  result AttemptResult
+  reason String
+  requestId String @db.Uuid
+  createdAt DateTime @default(now())
+  @@index([sourceIp, createdAt])
+  @@index([submittedEmail, createdAt])
+  @@index([userId, result, createdAt])
+}
+model Upload {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  originalName String
+  storedName String @unique
+  storagePath String
+  mimeType String
+  sizeBytes Int
+  sha256 String
+  sourceIp String
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+}
+model SecurityEvent {
+  id String @id @default(uuid()) @db.Uuid
+  eventType String
+  requestId String @db.Uuid
+  sourceIp String
+  userAgent String
+  submittedEmail String?
+  userId String? @db.Uuid
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  result String
+  reason String
+  metadata Json?
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+}
+model LabState {
+  id String @id @default("northstar")
+  lastResetAt DateTime?
+  resetCount Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

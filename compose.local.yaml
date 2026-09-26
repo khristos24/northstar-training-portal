@@ -1,0 +1,10 @@
+# Optional Windows/macOS verification. Production uses compose.yaml alone.
+# Start with: docker compose -f compose.yaml -f compose.local.yaml up -d --build
+services:
+  app:
+    volumes:
+      - ./.local/uploads:/app/uploads
+      - ./.local/logs:/app/logs
+  db:
+    ports:
+      - "127.0.0.1:5432:5432"

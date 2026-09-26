@@ -1,0 +1,10 @@
+rule Northstar_EICAR_Training
+{
+    meta:
+        description = "Harmless classroom EICAR marker; not a general malware verdict"
+        scope = "Northstar isolated training range"
+    strings:
+        $training_marker = "EICAR-STANDARD-ANTIVIRUS-TEST-FILE" ascii
+    condition:
+        filesize <= 1048576 and $training_marker
+}

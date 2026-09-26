@@ -1,0 +1,38 @@
+<!-- Example manager rules. Confirm these IDs are unused before merging. -->
+<group name="northstar,">
+  <rule id="100510" level="5">
+    <decoded_as>json</decoded_as>
+    <field name="event_type">^authentication_failure$</field>
+    <description>Northstar: unsuccessful lab authentication</description>
+    <group>authentication_failed,</group>
+  </rule>
+  <rule id="100511" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="event_type">^authentication_success$</field>
+    <description>Northstar: successful lab authentication</description>
+    <group>authentication_success,</group>
+  </rule>
+  <rule id="100512" level="5">
+    <decoded_as>json</decoded_as>
+    <field name="event_type">^upload_completed$</field>
+    <description>Northstar: authenticated artifact upload</description>
+  </rule>
+  <rule id="100513" level="6">
+    <decoded_as>json</decoded_as>
+    <field name="event_type">^upload_rejected$</field>
+    <description>Northstar: artifact upload rejected</description>
+  </rule>
+  <rule id="100514" level="7">
+    <if_sid>554</if_sid>
+    <field name="file" type="pcre2">^/opt/northstar/uploads/</field>
+    <description>Northstar: file created in monitored artifact directory</description>
+    <group>syscheck,</group>
+  </rule>
+  <rule id="100515" level="10">
+    <decoded_as>northstar_yara</decoded_as>
+    <field name="yara_rule">^Northstar_EICAR_Training$</field>
+    <field name="yara_scanned_file" type="pcre2">^/opt/northstar/uploads/</field>
+    <description>Northstar: harmless EICAR training signature detected</description>
+    <group>yara,training,</group>
+  </rule>
+</group>

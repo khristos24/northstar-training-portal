@@ -1,0 +1,13 @@
+<!-- Merge these entries into the enrolled Ubuntu agent's existing ossec_config.
+     Do not replace the complete agent configuration. -->
+<ossec_config>
+  <syscheck>
+    <disabled>no</disabled>
+    <scan_on_start>yes</scan_on_start>
+    <directories realtime="yes" check_all="yes" report_changes="no">/opt/northstar/uploads</directories>
+  </syscheck>
+  <localfile>
+    <log_format>json</log_format>
+    <location>/var/log/northstar/security.json</location>
+  </localfile>
+</ossec_config>

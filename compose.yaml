@@ -1,0 +1,53 @@
+name: northstar-lab
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: northstar
+      POSTGRES_USER: northstar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U northstar -d northstar"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    mem_limit: 512m
+    cpus: 1.0
+    networks: [lab]
+  app:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      BIND_HOST: 0.0.0.0
+      PORT: 8080
+      UPLOAD_DIR: /app/uploads
+      LOG_DIR: /app/logs
+    ports:
+      - "${HOST_BIND_IP:-127.0.0.1}:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - /opt/northstar/uploads:/app/uploads
+      - /var/log/northstar:/app/logs
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /app/.next/cache:size=64m,uid=1001,gid=1001
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g
+    cpus: 1.5
+    networks: [lab]
+volumes:
+  postgres_data:
+networks:
+  lab:
+    driver: bridge

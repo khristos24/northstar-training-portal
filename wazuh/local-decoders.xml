@@ -1,0 +1,9 @@
+<!-- Pair with the currently documented Wazuh YARA integration output format. -->
+<decoder name="northstar_yara">
+  <prematch>wazuh-yara:</prematch>
+</decoder>
+<decoder name="northstar_yara_fields">
+  <parent>northstar_yara</parent>
+  <regex>wazuh-yara: (\S+) - Scan result: (\S+) (\S+)</regex>
+  <order>log_type,yara_rule,yara_scanned_file</order>
+</decoder>

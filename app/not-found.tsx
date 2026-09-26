@@ -1,0 +1,1 @@
+export default function NotFound() { return <main className="error-page"><span className="eyebrow dark">NORTHSTAR / 404</span><h1>Outside the map.</h1><p>This page is not part of the training portal.</p><a className="button button-primary" href="/login">Return to sign in ↗</a></main>; }
