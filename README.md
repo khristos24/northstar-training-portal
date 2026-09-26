@@ -37,19 +37,19 @@ Assign a private address and restrict the AWS security group to the classroom/VP
 # From this repository:
 cp .env.example .env
 chmod 600 .env
-# Edit .env locally. Supply all five secrets before continuing.
+# Edit .env locally. Supply the four blank private values before continuing.
 sudo bash scripts/prepare-host.sh
 sudo bash scripts/verify-host-paths.sh
 sudo bash scripts/deploy.sh
 ```
 
-Alternatively, `npm run lab:init` creates .env with unique random lab-only values and refuses to overwrite an existing file. Credentials are never printed. Review and configure the finance password locally before class.
+Alternatively, `npm run lab:init` creates .env with the published fictional finance password and unique random values for the other four private variables. It refuses to overwrite an existing file and prints no credentials. The default finance sign-in is `finance@northstar.test` with password `Summer2026` on every fresh local setup. Change FINANCE_SEED_PASSWORD in your ignored .env before deployment if the instructor needs a different classroom target.
 
 Required: FINANCE_SEED_PASSWORD, EMPLOYEE_SEED_PASSWORD, ADMIN_SEED_PASSWORD, SESSION_SECRET (at least 32 characters), POSTGRES_PASSWORD (at least 16 characters). Seed passwords must be 1–72 bytes because bcrypt has a 72-byte limit. Startup errors identify missing/invalid variable names without echoing their values.
 
 Set APP_ORIGIN to the exact browser origin, e.g. `http://<assigned-private-ip>:8080`. Set HOST_BIND_IP to that private host address. Configure LAB_MODE=vulnerable for the exercise or secured for the mitigation comparison. Keep .env out of source control. Do not define DATABASE_URL when using the provided Compose database; host/port are set by Compose.
 
-Container startup validates configuration, deploys committed migrations and seeds the three accounts only when the lab is first initialized. The finance, employee and admin accounts use the corresponding seed variables. Bcrypt salts vary, but the resulting account identities and roles are deterministic.
+Container startup validates configuration, deploys committed migrations and seeds the three accounts only when the lab is first initialized. The finance, employee and admin accounts use the corresponding seed variables. Bcrypt salts vary, but the resulting account identities and roles are deterministic. An existing database is not reseeded on every restart; run the explicit seed command below if you change .env after first launch.
 
 ```bash
 docker compose exec -T app npm run db:migrate
@@ -60,7 +60,7 @@ Explicit reseeding updates account passwords/unlocks accounts. If rotating passw
 
 ## Modes and sessions
 
-Vulnerable mode has no login throttling, lockout, MFA or CAPTCHA. The instructor alone selects the intentionally weak classroom password. Do not reuse personal passwords.
+Vulnerable mode has no login throttling, lockout, MFA or CAPTCHA. The published fictional finance password is the reproducible local default; the instructor can override it in .env. Do not reuse personal passwords.
 
 Secured mode adds per-IP (30 attempts / 15 minutes), per-account (8 attempts / 15 minutes), and account lockout (5 failed passwords → 15 minutes). Counters are stored in PostgreSQL and serialized across processes. All requests count toward the rate windows, including successful and throttled requests. Secured uploads accept UTF-8 .txt only, reject binary controls and block the EICAR teaching marker.
 
@@ -107,7 +107,7 @@ hydra \
   -s 8080
 ```
 
-Place the instructor-configured FINANCE_SEED_PASSWORD in the sanitized classroom list. Do not collect or test real passwords. The app does not implement or distribute a credential-collection tool. Secured mode intentionally disrupts automated guessing.
+Include the configured FINANCE_SEED_PASSWORD in the sanitized classroom list. The published default `Summer2026` appears in the instructor-provided fictional list. Do not collect or test real passwords. The app does not implement or distribute a credential-collection tool. Secured mode intentionally disrupts automated guessing.
 
 ## Tests and local development
 

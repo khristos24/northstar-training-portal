@@ -7,7 +7,7 @@
 - Do not use production data.
 - Stop the environment when the class ends.
 
-Vulnerable mode intentionally disables authentication throttling, MFA, CAPTCHA and lockout. The instructor chooses the training password; no password is committed. No other vulnerability is intended.
+Vulnerable mode intentionally disables authentication throttling, MFA, CAPTCHA and lockout. The fictional finance credential in .env.example is deliberately public so fresh local installs have the same classroom target. It is unsuitable for unrestricted ingress. Instructors can override it through ignored .env. No real credential or private secret is committed. No other vulnerability is intended.
 
 Both modes use bcrypt, opaque random cookies with HMAC digests stored in PostgreSQL, expiry checks, server-side access control, SQL parameter binding, inert UUID upload names, exclusive file creation and bounded input reads. Upload/logout/revocation forms require a session-bound CSRF token. Secured login requires the configured Origin, while vulnerable login permits the native form exercise.
 

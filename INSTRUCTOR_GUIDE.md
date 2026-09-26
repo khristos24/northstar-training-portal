@@ -2,7 +2,7 @@
 
 ## Instructor secrets
 
-Keep .env private and untracked. Finance, employee and admin seed passwords, SESSION_SECRET, POSTGRES_PASSWORD and Wazuh enrollment material are instructor-only. The finance password is the one synthetic value you deliberately place in the sanitized classroom wordlist. Never use a real password. `npm run lab:init` generates isolated values without printing them.
+Keep .env private and untracked. The default finance password is a published, fictional training credential (`Summer2026`); it is not an instructor secret. Employee/admin seed passwords, SESSION_SECRET, POSTGRES_PASSWORD and Wazuh enrollment material are instructor-only. Override FINANCE_SEED_PASSWORD in .env if your class needs a private target, and place that chosen value in the sanitized classroom wordlist. Never use a real password. `npm run lab:init` generates the other four private values without printing them.
 
 ## Student-visible information
 
