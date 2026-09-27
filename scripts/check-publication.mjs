@@ -1,10 +1,15 @@
 import 'dotenv/config';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { parseEnv } from 'node:util';
 const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
 const sensitiveNames = /(^|\/)(\.env(\.|$)|\.local\/|uploads\/|logs\/|test-results\/|node_modules\/|\.next\/)/;
 const privateKeys = ['EMPLOYEE_SEED_PASSWORD', 'ADMIN_SEED_PASSWORD', 'SESSION_SECRET', 'POSTGRES_PASSWORD'];
 const secrets = privateKeys.map(k => process.env[k]).filter(Boolean);
+if (existsSync('.env.tunnel')) {
+  const tunnelToken = parseEnv(readFileSync('.env.tunnel', 'utf8')).TUNNEL_TOKEN;
+  if (tunnelToken) secrets.push(tunnelToken);
+}
 if (secrets.length !== privateKeys.length || !process.env.FINANCE_SEED_PASSWORD) throw new Error('Load a local .env before checking publication.');
 const publishedFinance = readFileSync('.env.example', 'utf8').match(/^FINANCE_SEED_PASSWORD=([^\r\n]+)$/m)?.[1];
 if (!publishedFinance) throw new Error('Published fictional finance password is missing from .env.example.');

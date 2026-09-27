@@ -4,6 +4,33 @@ A monochrome, resettable cybersecurity classroom application for the fictional *
 
 **Authorised isolated training only. Never allow unrestricted public ingress. Use fictional credentials and harmless instructor-approved artifacts. Stop the environment after class.**
 
+## One-command start after cloning
+
+Install [Git](https://git-scm.com/install/), [Node.js 24 with npm](https://nodejs.org/en/download), and Docker with Compose v2. On Windows, use [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with the Linux container engine running. On Ubuntu, use [Docker Engine and its Compose plugin](https://docs.docker.com/engine/install/ubuntu/); the starter also uses Bash, `sudo`, `realpath`, and `find`. Docker builds the application and pulls PostgreSQL, so you do not need a separate PostgreSQL or `cloudflared` installation. Suggested host capacity is 2 vCPU, 4 GB RAM, and 20 GB disk.
+
+From a fresh clone, run one command in the repository directory:
+
+```bash
+npm run lab:up
+```
+
+The starter creates an ignored `.env` on first run, generating the four private values while retaining the fictional finance seed password. On Ubuntu it prepares the fixed upload/log directories with `sudo`; on Windows it uses the local Compose mounts. It builds and starts the app and PostgreSQL containers, applies migrations, seeds the initial accounts, and waits for `http://localhost:8080/health`. Open **http://localhost:8080** and sign in as `finance@northstar.test` with `Summer2026`. Later runs preserve `.env` and the database. Docker must be running, and local ports 8080 (and 5432 on Windows) must be free.
+
+### Internet URL through Cloudflare Access
+
+This option gives approved users an internet-reachable HTTPS hostname while keeping the app's host port on `127.0.0.1`. It requires a Cloudflare account, an active domain managed by Cloudflare, and one-time dashboard configuration. A public hostname alone does not install an access policy. **Do not route this training app to an unrestricted audience:** its finance credential is published and its vulnerable mode deliberately removes login defenses.
+
+1. In Cloudflare Zero Trust, create a **self-hosted Access application** for the entire chosen hostname (for example, `lab.example.com`) and an **Allow policy** limited to your intended users. [Cloudflare's Access guide](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/) describes this setup.
+2. Create a **remotely managed named Tunnel** and add a published application route for that same hostname with service URL **`http://app:8080`**. The tunnel container joins the app's Compose network, so `localhost:8080` is the wrong service URL inside the tunnel. Enable **Protect with Access** for the route so `cloudflared` validates Access tokens. Copy the tunnel token from the dashboard; keep it private. [Cloudflare Tunnel setup](https://developers.cloudflare.com/tunnel/get-started/) and [token guidance](https://developers.cloudflare.com/tunnel/reference/tunnel-tokens/) cover these steps.
+3. Run `npm run lab:up` once if `.env` does not exist, then edit that ignored file: set `APP_ORIGIN=https://lab.example.com` (your exact hostname), `HTTPS_ENABLED=true`, `LAB_MODE=secured`, `HOST_BIND_IP=127.0.0.1`, and `TRUST_PROXY=false`. Create a separate ignored `.env.tunnel` containing one line, `TUNNEL_TOKEN=<your-token>`; on Ubuntu run `chmod 600 .env.tunnel`. This keeps the tunnel token out of the app container. Keep the domain's DNS route and the Access policy in place before starting the tunnel. Cloudflare Tunnel uses outbound connectivity; do not open inbound port 8080 or 5432 to the internet.
+4. Start or update the complete stack:
+
+   ```bash
+   npm run lab:public
+   ```
+
+Check that Cloudflare reports the tunnel connected, then visit your HTTPS hostname and complete the Access sign-in before the app login. The script validates the local configuration and starts the tunnel container, but it cannot create or verify your Cloudflare account, DNS, Access policy, or remote route. Since `TRUST_PROXY=false`, app rate limits see tunnel traffic as one source IP; keep the allowed audience small. Stop the stack with `docker compose -f compose.yaml -f compose.local.yaml -f compose.public.yaml down` on Windows or `sudo docker compose -f compose.yaml -f compose.public.yaml down` on Ubuntu.
+
 ## Application
 
 - Native `GET /login` and URL-encoded `POST /login` with exact fields `email` and `password`.
@@ -27,7 +54,7 @@ PostgreSQL: dedicated named volume `northstar-lab_postgres_data`; no published d
 
 ## Prerequisites and AWS boundaries
 
-Use an Ubuntu training host with Docker Engine and Compose v2, Bash, realpath and find. Use Node 24 and npm for local development, or generate the env file with Node before copying the project to the host. Suggested starting capacity: 2 vCPU, 4 GB RAM and 20 GB disk; build with more memory if necessary. Size Wazuh separately. Runtime resource caps are in compose.yaml.
+The one-command starter above covers the common Windows and Ubuntu paths. For a manual Ubuntu deployment, use Docker Engine and Compose v2, Bash, realpath and find. Use Node 24 and npm to generate the env file, or generate it with Node before copying the project to the host. Build with more memory if necessary. Size Wazuh separately. Runtime resource caps are in compose.yaml.
 
 Assign a private address and restrict the AWS security group to the classroom/VPN subnet on TCP 8080. Restrict SSH to instructor administration addresses. Do not expose 5432. Never add 0.0.0.0/0 or ::/0 application ingress. Compose binds localhost by default; change HOST_BIND_IP only to the assigned private interface. If TLS is used, terminate it at an instructor-controlled proxy.
 

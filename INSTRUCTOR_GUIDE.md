@@ -4,6 +4,8 @@
 
 Keep .env private and untracked. The default finance password is a published, fictional training credential (`Summer2026`); it is not an instructor secret. Employee/admin seed passwords, SESSION_SECRET, POSTGRES_PASSWORD and Wazuh enrollment material are instructor-only. Override FINANCE_SEED_PASSWORD in .env if your class needs a private target, and place that chosen value in the sanitized classroom wordlist. Never use a real password. `npm run lab:init` generates the other four private values without printing them.
 
+For the optional internet hostname, keep `.env.tunnel` private too. Configure Cloudflare Access for the entire hostname and enable Protect with Access on the tunnel route before using `npm run lab:public`. That command requires secured mode; run vulnerable-mode exercises only on the authorised private target described below.
+
 ## Student-visible information
 
 Provide the assigned private target IP/port, authorised time window, assigned fictional account, classroom contact channel and instructor-approved artifact. Complete STUDENT_SCOPE_TEMPLATE.md. The portal clearly displays the training warning and logs actions for the exercise.

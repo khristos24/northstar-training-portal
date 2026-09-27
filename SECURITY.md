@@ -7,6 +7,8 @@
 - Do not use production data.
 - Stop the environment when the class ends.
 
+The optional `npm run lab:public` path adds a Cloudflare Tunnel and requires a self-hosted Cloudflare Access policy covering the whole hostname. Configure **Protect with Access** on the tunnel route before starting it; only approved users should pass the Access gate. The starter checks for secured mode, HTTPS origin/cookies and localhost-only host binding, but it cannot verify remote Access or DNS settings. Its tunnel container reaches the app on a separate Compose edge network and has no database network access. Keep `.env.tunnel` private and ignored.
+
 Vulnerable mode intentionally disables authentication throttling, MFA, CAPTCHA and lockout. The fictional finance credential in .env.example is deliberately public so fresh local installs have the same classroom target. It is unsuitable for unrestricted ingress. Instructors can override it through ignored .env. No real credential or private secret is committed. No other vulnerability is intended.
 
 Both modes use bcrypt, opaque random cookies with HMAC digests stored in PostgreSQL, expiry checks, server-side access control, SQL parameter binding, inert UUID upload names, exclusive file creation and bounded input reads. Upload/logout/revocation forms require a session-bound CSRF token. Secured login requires the configured Origin, while vulnerable login permits the native form exercise.

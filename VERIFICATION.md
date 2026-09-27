@@ -9,8 +9,9 @@ The repository was built and tested on Windows with Docker Desktop. The exact co
 | PostgreSQL 17 | `docker compose -f compose.yaml -f compose.local.yaml up -d db` | Started |
 | Migration | `npx prisma migrate deploy` | `202609260001_init` applied |
 | Seed | `npm run db:seed` | Three fictional accounts seeded |
-| Unit tests | `npm test` | 25 passed, including fresh LF and CRLF setup with the same fictional finance credential |
+| Unit tests | `npm test` | 33 passed, including fresh LF and CRLF setup with the same fictional finance credential and public-startup configuration guards |
 | TypeScript | `npm run typecheck` | Passed |
+| Starter and tunnel overlays | `docker compose -f compose.yaml -f compose.local.yaml -f compose.public.yaml config --quiet` and Ubuntu-equivalent file set, using a temporary synthetic tunnel token | Both Compose configurations passed. `npm run lab:up` reached Compose, but Docker Desktop was stopped, so live starter launch was not verified in this change. No Cloudflare account, route or Access policy was available for a live tunnel check. |
 | Next production build | `npm run build` | Passed |
 | Playwright core workflow | `npm run test:e2e`; `npx playwright test -g 'secured per-account and per-IP'` | Two core workflows and a separate per-account/per-IP source-IP test passed |
 | Linux reset guard | PowerShell: `$taskRoot = (Get-Location).Path; docker run --rm --mount "type=bind,source=$taskRoot,target=/work,readonly" --workdir /work node:24-bookworm-slim bash tests/reset-guards.sh` | Passed |

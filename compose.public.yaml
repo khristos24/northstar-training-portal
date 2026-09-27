@@ -1,0 +1,20 @@
+# Optional internet path: create a named Cloudflare Tunnel and Access policy first.
+# Use with compose.yaml (and compose.local.yaml on Windows).
+services:
+  app:
+    networks: [lab, edge]
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    env_file: .env.tunnel
+    depends_on:
+      app:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [edge]
+networks:
+  edge:
+    driver: bridge
